@@ -61,8 +61,13 @@ input:focus{border-color:var(--brand)}
 
 /* 남은 부스 목록 */
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.chip{font-size:12px;font-weight:700;padding:5px 10px;border-radius:99px;background:#eef4f9;color:var(--sub)}
-.chip.on{background:#e3f8ee;color:#16815a}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;padding:6px 11px;
+  border-radius:99px;background:#fff;border:1.5px solid #d7e6f2;color:var(--ink)}
+.chip.on{background:#e9edf2;border-color:#e9edf2;color:#97a5b5;font-weight:600}
+.chip.on .nm{text-decoration:line-through}
+.chip .tag{font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:99px;background:#c7d0da;color:#fff}
+.chip .no{font-size:11px;color:var(--sub);font-weight:800;min-width:14px;text-align:right}
+.chip.on .no{color:#b3bfcb}
 
 .done{text-align:center;background:linear-gradient(135deg,#fff6d4,#ffe3ef);border:2px solid #ffc93c}
 .done h2{margin:6px 0}
@@ -200,7 +205,7 @@ input:focus{border-color:var(--brand)}
     </div>
 
     <div class="card" style="margin-top:12px">
-      <b style="font-size:15px">부스 현황</b>
+      <b style="font-size:15px" id="chipTitle">부스 현황</b>
       <div class="chips" id="chips"></div>
       <button class="btn ghost small hidden" id="myQrBtn" style="margin-top:14px">🎫 본부 확인용 QR 보기</button>
       <button class="btn ghost small hidden" id="logoutBtn">학번·이름 다시 입력하기</button>
@@ -12707,7 +12712,7 @@ const ADMIN_KEY="ep9rnddr5l1ml1";
    ===================================================================== */
 const CONFIG = {
   title: "K-STEM 스탬프 투어",
-  adminPin: "1234",
+  adminPin: "21442144",
   stampOrder: "visit",
   syncUrl: "https://script.google.com/macros/s/AKfycbxMDqQLWhUB_cKpWAb266eoCKG3Xupsox5rgDBqbM8ffXDvSjTwZCzIKtBjdlIfOl7yNQ/exec",  // 구글 시트 연동 주소 (설정서 참고). 비워 두면 본부 스캔 방식으로만 집계돼요.
   finishMessage: "이 화면을 본부석 선생님께 보여 주세요!",
@@ -12884,8 +12889,13 @@ function render(popCode){
   drawStamps(popCode);
   $("chips").innerHTML = CONFIG.booths.map(b=>{
     const r = state.stamps[b.code];
-    return `<span class="chip ${r?"on":""}">${r?"✔ "+r.cell+"번 · ":""}${b.name}</span>`;
+    return `<span class="chip ${r?"on":""}">
+      <span class="no">${b.cell}</span>
+      <span class="nm">${b.name}</span>
+      ${r ? `<span class="tag">완료</span>` : ""}
+    </span>`;
   }).join("");
+  $("chipTitle").innerHTML = `부스 현황 <span style="color:var(--ok)">${got}곳 완료</span> <span class="muted" style="font-weight:600">· 남은 곳 ${total-got}</span>`;
   const done = got===total;
   $("doneCard").classList.toggle("hidden", !done);
   if(done) $("doneMsg").innerHTML = `<b>${state.user.id} ${state.user.name}</b><br>${CONFIG.finishMessage}`;
