@@ -89,6 +89,7 @@ input:focus{border-color:var(--brand)}
 .mbox .mname{display:inline-block;margin-top:10px;font-weight:800;color:#15314a;background:#f1f6fa;
   border-radius:99px;padding:6px 14px;font-size:15px}
 .mbox .btn{margin-top:16px;background:var(--mc);border:4px solid #15314a;box-shadow:0 5px 0 rgba(21,49,74,.35)}
+.mbox .btn.ghost{margin-top:10px;background:#eef3f7;color:#5d6b82;border-color:#c9d6e2;box-shadow:0 4px 0 rgba(21,49,74,.18)}
 .mbox .btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(21,49,74,.35)}
 
 .toast{position:fixed;left:50%;top:14px;transform:translateX(-50%) translateY(-140px);background:#15314a;color:#fff;padding:12px 18px;border-radius:14px;font-weight:800;z-index:60;transition:transform .35s;max-width:92vw;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.25)}
@@ -153,6 +154,7 @@ input:focus{border-color:var(--brand)}
       <div id="mExtra"></div>
       <div id="mName"></div>
       <button class="btn" id="mBtn">확인</button>
+      <button class="btn ghost hidden" id="mBtn2">취소</button>
     </div>
   </div>
 </div>
@@ -12717,17 +12719,17 @@ const CONFIG = {
   syncUrl: "https://script.google.com/macros/s/AKfycbxMDqQLWhUB_cKpWAb266eoCKG3Xupsox5rgDBqbM8ffXDvSjTwZCzIKtBjdlIfOl7yNQ/exec",  // 구글 시트 연동 주소 (설정서 참고). 비워 두면 본부 스캔 방식으로만 집계돼요.
   finishMessage: "이 화면을 본부석 선생님께 보여 주세요!",
   booths: [
-    { cell:1, code:"k01-7ax", name:"AI 환각" },
-    { cell:2, code:"k02-3mq", name:"AI 프롬프트 작성법" },
+    { cell:1, code:"k01-7ax", name:"AI 환각 탐정단" },
+    { cell:2, code:"k02-3mq", name:"AI 한정선(一正鮮)" },
     { cell:3, code:"k03-9zt", name:"코딩 게임 플레이존" },
     { cell:4, code:"k04-5vn", name:"AI 포토 스튜디오" },
-    { cell:5, code:"k05-2wk", name:"흑점 관찰 (상시)" },
-    { cell:6, code:"k06-8rp", name:"워킹글라이더 체험" },
-    { cell:7, code:"k07-4hd", name:"액체질소 체험" },
-    { cell:8, code:"k08-6jy", name:"손발전기 체험" },
+    { cell:5, code:"k05-2wk", name:"태양의 얼룩, 자기장의 흔적" },
+    { cell:6, code:"k06-8rp", name:"하늘을 향한 물리학" },
+    { cell:7, code:"k07-4hd", name:"냉각주의보: −196℃" },
+    { cell:8, code:"k08-6jy", name:"인간 발전소: 에너지 ON!" },
     { cell:9, code:"k09-1fs", name:"화학이 피어나는 정원" },
-    { cell:10, code:"k10-8cu", name:"혈액형 판정 체험" },
-    { cell:11, code:"k11-3gx", name:"탄소동소체 체험" },
+    { cell:10, code:"k10-8cu", name:"혈액 속 비밀: BLOOD CODE" },
+    { cell:11, code:"k11-3gx", name:"하나의 원소, 무한한 변신" },
     { cell:12, code:"k12-7nb", name:"(발표)축구공 표면 구조" },
     { cell:13, code:"k13-5ke", name:"(발표)열돔 효과" },
     { cell:14, code:"k14-9qw", name:"(발표)자기 부상 열차" },
@@ -12776,7 +12778,7 @@ function toast(msg){
 
 /* 게임 느낌의 알림창 : type = warn(빨강) / info(파랑) / ok(초록) */
 const MCOLOR = { warn:"#e8434d", info:"#2f9be0", ok:"#2bb673" };
-function showModal({type="warn", icon="!", title="", text="", name="", html="", btn="확인"}){
+function showModal({type="warn", icon="!", title="", text="", name="", html="", btn="확인", cancel="", onOk=null, onCancel=null}){
   $("mbox").style.setProperty("--mc", MCOLOR[type]||MCOLOR.warn);
   $("mIcon").textContent = icon;
   $("mTitle").textContent = title;
@@ -12784,12 +12786,16 @@ function showModal({type="warn", icon="!", title="", text="", name="", html="", 
   $("mExtra").innerHTML = html || "";
   $("mName").innerHTML = name ? `<span class="mname">${name}</span>` : "";
   $("mBtn").textContent = btn;
+  $("mBtn").onclick = () => { closeModal(); if(onOk) onOk(); };
+  $("mBtn2").classList.toggle("hidden", !cancel);
+  $("mBtn2").textContent = cancel || "취소";
+  $("mBtn2").onclick = () => { closeModal(); if(onCancel) onCancel(); };
+  $("modal").dataset.locked = cancel ? "1" : "";
   $("modal").classList.remove("hidden");
   if(navigator.vibrate) navigator.vibrate(type==="warn" ? [90,60,90] : 60);
 }
 function closeModal(){ $("modal").classList.add("hidden") }
-$("mBtn").onclick = closeModal;
-$("modal").onclick = e => { if(e.target===$("modal")) closeModal() };
+$("modal").onclick = e => { if(e.target===$("modal") && !$("modal").dataset.locked) closeModal() };
 const boothByCode = c => CONFIG.booths.find(b=>b.code.toLowerCase()===(c||"").trim().toLowerCase());
 function codeFromText(t){
   try{ const u=new URL(t); return u.searchParams.get("booth")||(u.hash.match(/booth=([^&]+)/)||[])[1]||"" }catch(e){ return t }
@@ -12847,6 +12853,14 @@ function stamp(code){
       name:b.name, btn:"알겠어요" });
     return;
   }
+  showModal({ type:"info", icon:"?", title:"미션을 완료했나요?",
+    text:"이 부스의 활동을 모두 마쳤다면 도장을 받으세요.\n도장은 한 번만 받을 수 있어요.",
+    name:b.name, btn:"네, 도장 받기", cancel:"아직이에요",
+    onOk:()=>doStamp(b) });
+}
+
+function doStamp(b){
+  if(state.stamps[b.code]) return;                    // 혹시 모를 중복 방지
   const cell = (CONFIG.stampOrder==="fixed") ? b.cell : nextCell();
   if(!cell){
     showModal({ type:"info", icon:"★", title:"빈 칸이 없어요",
